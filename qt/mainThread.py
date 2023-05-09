@@ -32,35 +32,41 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-        self.manageAct = None
         self.timer = QTimer()
-        self.acts = {}
-        self.actID = None
-        self.image = None
-        self.adminID = None
-        self.faceThread = None
         self.login = Login()
         self.addUser = AddUser()
         self.addAct = AddAct()
         self.cameraThread = Camera()
+        self.acts = {}
+        self.manageAct = None
+        self.actID = None
+        self.image = None
+        self.adminID = None
+        self.faceThread = None
         self.setupUi(self)
         self.initUi()
         self.initSlot()
 
     def initUi(self):
+        """初始化UI"""
+        # 先进行登录
         self.login.show()
 
         # 设置大小
         self.resize(1000, 600)
         self.setFixedSize(1000, 600)
+
+        # 未打开摄像头时禁用检测和录入功能
         self.start_btn.setDisabled(True)
         self.add_user_btn.setDisabled(True)
 
     def initAct(self):
+        """初始化活动选择下拉框"""
         self.act_cb.clear()
         db = DBUtil()
         acts = db.getAll(f"select id,name,start_time,end_time from face.activity where admin_id={self.adminID}")
         if len(acts) == 0:
+            # 如果当前管理员无活动先提示添加活动
             QMessageBox.information(self, "waining", "暂无活动请先创建活动", QMessageBox.Ok)
             self.addAct.adminID = self.adminID
             self.addAct.show()
@@ -70,6 +76,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
                 self.act_cb.addItem(f"{act[0]}:{self.acts[act[0]][0]}")
 
     def initSlot(self):
+        """连接信号和槽"""
         self.login.successLogin.connect(self.loginSuccess)
         self.addUser.addReturn.connect(self.addUserSuccess)
         self.addAct.addReturn.connect(self.addActSuccess)
@@ -85,12 +92,14 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.start_btn.clicked.connect(self.startFunc)
 
     def loginSuccess(self, admin_id):
+        """登录成功后执行"""
         self.adminID = admin_id
         self.initAct()
         self.show()
         self.login.destroy()
 
     def openCamera(self):
+        """打开摄像头"""
         if self.cameraThread.isRunning():
             self.cameraThread.terminate()
             self.closeCamera()
@@ -104,16 +113,19 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
             self.add_user_btn.setDisabled(False)
 
     def closeCamera(self):
+        """关闭摄像头"""
         self.open_btn.setText("打开摄像头")
         self.open_btn.setStyleSheet("background-color: skyblue;")
         self.initLabel()
 
     def showImage(self, image):
+        """将图片展示到 QLabel 上"""
         self.image = image
         self.camera_lab.setPixmap(QPixmap.fromImage(
             QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)))
 
     def addUserFunc(self):
+        """录入人脸功能"""
         try:
             if self.getFace():
                 self.addUser.adminID = self.adminID
@@ -125,6 +137,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
             print(e)
 
     def getFace(self):
+        """获取摄像头拍摄的人脸并标记人脸位置显示到QLabel上"""
         locs = face_recognition.face_locations(self.image)
         if len(locs) == 0:
             return False
@@ -141,6 +154,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.camera_lab.setStyleSheet("border:5px solid rgb(255,170,0);")
 
     def closeEvent(self, event):
+        """重写关闭事件"""
         ok = QPushButton()
         cancel = QPushButton()
         msg = QMessageBox(QMessageBox.Warning, '关闭', '是否关闭！')
@@ -157,11 +171,13 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
             os._exit(0)
 
     def addUserSuccess(self):
+        """添加用户成功后执行"""
         self.addUser.feature = None
         self.addUser.close()
         self.addUser.destroy()
 
     def changeAct(self, name):
+        """活动更改后执行"""
         if name == '':
             return
         else:
@@ -169,15 +185,18 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
             self.actID = int(name.split(":")[0])
 
     def addActSuccess(self):
+        """添加活动成功后执行"""
         self.addAct.close()
         self.addAct.destroy()
         self.initAct()
 
     def addActFunc(self):
+        """添加活动功能"""
         self.addAct.adminID = self.adminID
         self.addAct.show()
 
     def manageActFunc(self):
+        """管理活动功能"""
         print(self.adminID, self.actID, self.acts[self.actID])
         self.manageAct = ManageAct(self.adminID, self.actID, self.acts[self.actID])
         self.manageAct.manageReturn.connect(self.manageActSuccess)
@@ -185,16 +204,19 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.manageAct.show()
 
     def manageActSuccess(self, act):
+        """结束管理活动后执行"""
         self.manageAct.close()
         self.manageAct.destroy()
         self.updateAct(act)
 
     def updateAct(self, act):
+        """活动更新后执行"""
         self.act_cb.setItemText(self.act_cb.currentIndex(), f"{act[0]}:{act[1]}")
         self.actID = act[0]
         self.acts[self.actID] = [act[1], act[2], act[3]]
 
     def showResult(self):
+        """展示识别结果"""
         msg = self.recognition()
         if msg is not None:
             self.result_lab.setText(f"id: {msg['id']}, sno:{msg['sno']}, name:{msg['name']}")
@@ -205,6 +227,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
             return
 
     def startFunc(self):
+        """开始检测"""
         if self.timer.isActive():
             self.timer.stop()
             self.start_btn.setText("开始检测")
@@ -221,6 +244,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
             self.act_cb.setDisabled(True)
 
     def recognition(self):
+        """人脸识别"""
         datas, features = self.getData()
         rgb_img = self.image
         encodings = face_recognition.face_encodings(rgb_img)
@@ -236,6 +260,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         return datas[idx]
 
     def getData(self):
+        """获取参加活动签到人员的数据"""
         db = DBUtil()
         sql = f"select u.id, u.sno, u.name, u.feature, u.email, s.is_sign from face.user u " \
               f"inner join face.sign s on u.id = s.user_id where s.activity_id={self.actID}"  # and s.is_sign=0"
@@ -243,7 +268,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         datas = []
         features = []
         for data in res:
-            feature = decoding_FaceStr(data[3])
+            feature = str2feature(data[3])
             dic = {
                 'id': data[0],
                 'sno': data[1],
@@ -256,6 +281,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         return datas, features
 
     def sign(self, data):
+        """识别后签到并发送邮件通知"""
         if data['is_sign'] != '未签到':
             return
         st = self.acts[self.actID][1]
@@ -277,12 +303,13 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
                 db.update(sql)
                 content = {
                     'subject': "签到通知",
-                    'body':  f"{data['name']},您参加的{self.acts[self.actID][0]}活动已经成功签到！"
+                    'body': f"{data['name']},您参加的{self.acts[self.actID][0]}活动已经成功签到！"
                 }
                 email.sendOne(data['email'], content)
 
 
-def decoding_FaceStr(encoding_str):
+def str2feature(encoding_str):
+    """将字符串转换为numpy数组"""
     dlist = encoding_str.strip(' ').split(',')
     dFloat = list(map(float, dlist))
     face_encoding = numpy.array(dFloat)
