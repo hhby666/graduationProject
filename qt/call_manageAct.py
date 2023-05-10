@@ -21,6 +21,7 @@ from tool.DBUtil import DBUtil, getDateTime
 class ManageAct(MyMainWindow, Ui_manageAct):
     manageReturn = pyqtSignal(list)
     changeSubmit = pyqtSignal(list)
+    deleteSignal = pyqtSignal()
 
     def __init__(self, adminID, actID, act, parent=None):
         super(ManageAct, self).__init__(parent)
@@ -49,6 +50,13 @@ class ManageAct(MyMainWindow, Ui_manageAct):
         self.addUser_btn.clicked.connect(self.addUserFunc)
         self.add_bt.clicked.connect(self.change)
         self.output_btn.clicked.connect(self.generateCsv)
+        self.delete_btn.clicked.connect(self.delete)
+
+    def delete(self):
+        db = DBUtil()
+        db.delete(f"delete from activity where id={self.actID}")
+        self.deleteSignal.emit()
+        self.close()
 
     def change(self):
         name = self.name_le.text()
@@ -158,10 +166,7 @@ class UTA(MyMainWindow, Ui_addUser):
         self.user_tb.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.user_tb.setEditTriggers(QAbstractItemView.NoEditTriggers)
         datas = self.getUserData()
-        # if len(datas)==0:
-        #
-        #     self.close()
-        print(f"data:{datas}")
+        print(f"data lens:{len(datas)}")
         self.user_tb.setRowCount(len(datas))
         for i in range(len(datas)):
             item0 = QTableWidgetItem(str(datas[i][0]))

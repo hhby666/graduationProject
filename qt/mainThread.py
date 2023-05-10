@@ -19,6 +19,7 @@ from qt.call_addAct import AddAct
 from qt.call_addUser import AddUser
 from qt.call_login import Login
 from qt.call_manageAct import ManageAct
+from qt.call_manageUser import ManageUser
 from qt.camera_thread import Camera
 from qt.module import MyMainWindow
 from qt.ui.mainUI import Ui_MainWindow
@@ -39,6 +40,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.cameraThread = Camera()
         self.acts = {}
         self.manageAct = None
+        self.manageUser = None
         self.actID = None
         self.image = None
         self.adminID = None
@@ -90,6 +92,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.add_act_btn.clicked.connect(self.addActFunc)
         self.manage_btn.clicked.connect(self.manageActFunc)
         self.start_btn.clicked.connect(self.startFunc)
+        self.manage_msg_btn.clicked.connect(self.manageUserFunc)
 
     def loginSuccess(self, admin_id):
         """登录成功后执行"""
@@ -201,6 +204,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.manageAct = ManageAct(self.adminID, self.actID, self.acts[self.actID])
         self.manageAct.manageReturn.connect(self.manageActSuccess)
         self.manageAct.changeSubmit.connect(self.updateAct)
+        self.manageAct.deleteSignal.connect(self.initAct)
         self.manageAct.show()
 
     def manageActSuccess(self, act):
@@ -214,6 +218,10 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.act_cb.setItemText(self.act_cb.currentIndex(), f"{act[0]}:{act[1]}")
         self.actID = act[0]
         self.acts[self.actID] = [act[1], act[2], act[3]]
+
+    def manageUserFunc(self):
+        self.manageUser = ManageUser(self.adminID)
+        self.manageUser.show()
 
     def showResult(self):
         """展示识别结果"""

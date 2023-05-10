@@ -223,6 +223,19 @@ QLabel{
      <string>添加签到人员</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="delete_btn">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>340</y>
+      <width>301</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>删除此活动</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
