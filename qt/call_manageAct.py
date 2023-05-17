@@ -9,6 +9,7 @@ import csv
 import pathlib
 
 from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import *
 
 from qt.module import MyMainWindow
@@ -84,7 +85,9 @@ class ManageAct(MyMainWindow, Ui_manageAct):
         self.user_tb.setEditTriggers(QAbstractItemView.NoEditTriggers)
         datas = self.getData()
         self.user_tb.setRowCount(len(datas))
-        for i in range(len(datas)):
+        num = len(datas)
+        signed = 0
+        for i in range(num):
             item0 = QTableWidgetItem(datas[i][0])
             item0.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             self.user_tb.setItem(i, 0, item0)
@@ -93,19 +96,32 @@ class ManageAct(MyMainWindow, Ui_manageAct):
             self.user_tb.setItem(i, 1, item1)
             item2 = QTableWidgetItem(datas[i][2])
             item2.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            if datas[i][2] == '已签到':
+                signed += 1
+                item2.setBackground(QBrush(QColor('green')))
+            else:
+                item2.setBackground(QBrush(QColor('red')))
             self.user_tb.setItem(i, 2, item2)
+        absent = num - signed
+        self.statics = [num, signed, signed/num]
+        self.st_lab.setText(f"应到:{num} 实到:{signed} 出勤率:{signed / num:.2%}")
+        print(num, absent)
 
     def getData(self):
         db = DBUtil()
-        res = db.getAll(f"select u.sno, u.name, s.is_sign from face.user u inner join face.sign s "
+        res = db.getAll(f"select u.sno, u.name, s.is_sign, s.update_time from face.user u inner join face.sign s "
                         f"on u.id=s.user_id where s.activity_id={self.actID}")
         datas = []
         for data in res:
-            datas.append([data[0], data[1], config.sign_dic[data[2]]])
+            if data[2] == 1:
+                time = data[3]
+            else:
+                time = ''
+            datas.append([data[0], data[1], config.sign_dic[data[2]], time])
         return datas
 
     def generateCsv(self):
-        fileName, fileType = QFileDialog.getSaveFileName(self, "保存文件", str(pathlib.Path.home()), 'CSV (*.csv)')
+        fileName, fileType = QFileDialog.getSaveFileName(self, "保存文件", str(pathlib.Path.home())+'/签到表.csv', 'CSV (*.csv)')
         datas = self.getData()
         if fileName == "":
             return
@@ -113,9 +129,11 @@ class ManageAct(MyMainWindow, Ui_manageAct):
         try:
             with open(fileName, 'w', encoding='utf-8', newline='') as f:
                 writer = csv.writer(f)
-                writer.writerow(['学号', '姓名', '签到状态'])
+                writer.writerow(['学号', '姓名', '签到状态', '时间'])
                 for data in datas:
-                    writer.writerow([data[0], data[1], data[2]])
+                    writer.writerow([data[0], data[1], data[2], data[3]])
+                writer.writerow(['实到', '应到', '出勤率'])
+                writer.writerow([self.statics[0], self.statics[1], self.statics[2]])
         except Exception as e:
             print(e)
             print("导出失败！")
