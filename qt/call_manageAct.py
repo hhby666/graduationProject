@@ -26,6 +26,7 @@ class ManageAct(MyMainWindow, Ui_manageAct):
 
     def __init__(self, adminID, actID, act, parent=None):
         super(ManageAct, self).__init__(parent)
+        self.statics = None
         self.addUserView = None
         self.setupUi(self)
         self.adminID = adminID
@@ -103,8 +104,11 @@ class ManageAct(MyMainWindow, Ui_manageAct):
                 item2.setBackground(QBrush(QColor('red')))
             self.user_tb.setItem(i, 2, item2)
         absent = num - signed
-        self.statics = [num, signed, signed/num]
-        self.st_lab.setText(f"应到:{num} 实到:{signed} 出勤率:{signed / num:.2%}")
+        if num == 0:
+            self.st_lab.setText(f"应到:0 实到:0 出勤率:0.00%")
+        else:
+            self.statics = [num, signed, signed/num]
+            self.st_lab.setText(f"应到:{num} 实到:{signed} 出勤率:{signed / num:.2%}")
         print(num, absent)
 
     def getData(self):

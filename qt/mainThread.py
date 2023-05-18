@@ -6,6 +6,7 @@ FileName:mainThread.py in GraduationProject
 Tools:PyCharm python3.9
 """
 import os
+import time
 from datetime import datetime
 
 import cv2
@@ -26,6 +27,36 @@ from qt.ui.mainUI import Ui_MainWindow
 from tool import config
 from tool.DBUtil import DBUtil
 from tool.EmailUtil import EmailUtil
+from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtGui import QPixmap, QImage
+
+
+class FaceRecognition(QThread):
+    """"""
+    resultSignal = pyqtSignal(object)
+
+    def __init__(self, face, features, datas, parent=None):
+        super(FaceRecognition, self).__init__(parent)
+        self.face = face
+        self.features = features
+        self.datas = datas
+
+    def run(self):
+        encodings = face_recognition.face_encodings(self.face)
+        if len(encodings) == 0:
+            return None
+        res = face_recognition.compare_faces(self.features, encodings[0], tolerance=0.4)
+        idx = -1
+        try:
+            idx = res.index(True)
+        except Exception as e:
+            print(f"error: {e} 无匹配人脸信息")
+            self.resultSignal.emit(None)
+        if idx == -1:
+            msg = None
+        else:
+            msg = self.datas[idx]
+        self.resultSignal.emit(msg)
 
 
 class MainWindow(MyMainWindow, Ui_MainWindow):
@@ -83,6 +114,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.addUser.addReturn.connect(self.addUserSuccess)
         self.addAct.addReturn.connect(self.addActSuccess)
         self.cameraThread.cameraSignal.connect(self.showImage)
+        self.cameraThread.faceSignal.connect(self.getImage)
         self.timer.timeout.connect(self.showResult)
 
         self.open_btn.clicked.connect(self.openCamera)
@@ -121,11 +153,12 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         self.open_btn.setStyleSheet("background-color: skyblue;")
         self.initLabel()
 
-    def showImage(self, image):
+    def showImage(self, pix):
         """将图片展示到 QLabel 上"""
+        self.camera_lab.setPixmap(pix)
+
+    def getImage(self, image):
         self.image = image
-        self.camera_lab.setPixmap(QPixmap.fromImage(
-            QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)))
 
     def addUserFunc(self):
         """录入人脸功能"""
@@ -225,14 +258,29 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
 
     def showResult(self):
         """展示识别结果"""
+        # datas, features = self.getData()
+        # self.faceThread = FaceRecognition(self.image, features, datas)
+        # self.faceThread.resultSignal.connect(self.displayMsg)
+        # self.faceThread.start()
+
         msg = self.recognition()
         if msg is not None:
             self.result_lab.setText(f"id: {msg['id']}, sno:{msg['sno']}, name:{msg['name']}")
             self.result_lab.setStyleSheet("background-color: green")
             self.sign(msg)
         else:
+            self.result_lab.clear()
             self.result_lab.setStyleSheet("background-color: white")
             return
+
+    def displayMsg(self, msg):
+        if msg is not None:
+            self.result_lab.setText(f"id: {msg['id']}, sno:{msg['sno']}, name:{msg['name']}")
+            self.result_lab.setStyleSheet("background-color: green")
+            self.sign(msg)
+        else:
+            self.result_lab.clear()
+            self.result_lab.setStyleSheet("background-color: white")
 
     def startFunc(self):
         """开始检测"""
@@ -245,7 +293,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
             self.act_cb.setDisabled(False)
             self.result_lab.setStyleSheet("background-color: white")
         else:
-            self.timer.start(500)
+            self.timer.start(1000)
             self.start_btn.setStyleSheet("background-color: blue;")
             self.start_btn.setText("停止检测")
             self.open_btn.setDisabled(True)
@@ -258,7 +306,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         encodings = face_recognition.face_encodings(rgb_img)
         if len(encodings) == 0:
             return None
-        res = face_recognition.compare_faces(features, encodings[0], tolerance=0.6)
+        res = face_recognition.compare_faces(features, encodings[0], tolerance=0.4)
         try:
             idx = res.index(True)
         except Exception as e:
