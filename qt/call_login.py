@@ -90,10 +90,3 @@ class Login(MyMainWindow, Ui_MainWindow_Login):
         self.register.destroy()
         self.show()
         self.un_le.setFocus()
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    w = Login()
-    w.show()
-    sys.exit(app.exec())

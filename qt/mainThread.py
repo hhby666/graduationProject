@@ -66,10 +66,10 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.timer = QTimer()
         self.login = Login()
-        self.addUser = AddUser()
-        self.addAct = AddAct()
         self.cameraThread = Camera()
         self.acts = {}
+        self.addUser = None
+        self.addAct = None
         self.manageAct = None
         self.manageUser = None
         self.actID = None
@@ -101,8 +101,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         if len(acts) == 0:
             # 如果当前管理员无活动先提示添加活动
             QMessageBox.information(self, "waining", "暂无活动请先创建活动", QMessageBox.Ok)
-            self.addAct.adminID = self.adminID
-            self.addAct.show()
+            self.add_act_btn.click()
         else:
             for act in acts:
                 self.acts[act[0]] = [act[1], act[2], act[3]]
@@ -111,8 +110,6 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
     def initSlot(self):
         """连接信号和槽"""
         self.login.successLogin.connect(self.loginSuccess)
-        self.addUser.addReturn.connect(self.addUserSuccess)
-        self.addAct.addReturn.connect(self.addActSuccess)
         self.cameraThread.cameraSignal.connect(self.showImage)
         self.cameraThread.faceSignal.connect(self.getImage)
         self.timer.timeout.connect(self.showResult)
@@ -129,8 +126,8 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
     def loginSuccess(self, admin_id):
         """登录成功后执行"""
         self.adminID = admin_id
-        self.initAct()
         self.show()
+        self.initAct()
         self.login.destroy()
 
     def openCamera(self):
@@ -163,11 +160,13 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
     def addUserFunc(self):
         """录入人脸功能"""
         try:
+            self.addUser = AddUser(self.adminID, self.actID)
+            self.addUser.addReturn.connect(self.addUserSuccess)
             if self.getFace():
-                self.addUser.adminID = self.adminID
                 self.addUser.show()
             else:
                 print("error!")
+                QMessageBox.information(self,'warning','未检测到人脸！', QMessageBox.Ok)
                 return
         except Exception as e:
             print(e)
@@ -228,7 +227,8 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
 
     def addActFunc(self):
         """添加活动功能"""
-        self.addAct.adminID = self.adminID
+        self.addAct = AddAct(self.adminID)
+        self.addAct.addReturn.connect(self.addActSuccess)
         self.addAct.show()
 
     def manageActFunc(self):
@@ -319,7 +319,7 @@ class MainWindow(MyMainWindow, Ui_MainWindow):
         """获取参加活动签到人员的数据"""
         db = DBUtil()
         sql = f"select u.id, u.sno, u.name, u.feature, u.email, s.is_sign from face.user u " \
-              f"inner join face.sign s on u.id = s.user_id where s.activity_id={self.actID}"  # and s.is_sign=0"
+              f"inner join face.sign s on u.id = s.user_id where s.activity_id={self.actID}"
         res = db.getAll(sql)
         datas = []
         features = []

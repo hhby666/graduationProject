@@ -20,12 +20,12 @@ class AddAct(MyMainWindow, Ui_addAct):
     """"""
     addReturn = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, adminID, parent=None):
         super(AddAct, self).__init__(parent)
         self.setupUi(self)
         self.initUi()
         self.initSlot()
-        self.adminID = None
+        self.adminID = adminID
         self.initDT()
 
     def initUi(self):
@@ -52,6 +52,9 @@ class AddAct(MyMainWindow, Ui_addAct):
             QMessageBox.information(self, "waining", "活动名称不得为空！", QMessageBox.Ok)
             self.name_le.clear()
             self.name_le.setFocus()
+            return
+        if st > ed:
+            QMessageBox.information(self, "waining", "开始时间不得晚于结束时间！", QMessageBox.Ok)
             return
         db = DBUtil()
         res = db.save(f"insert into face.activity(name, admin_id, start_time, end_time) "

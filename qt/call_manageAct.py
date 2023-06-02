@@ -7,6 +7,7 @@ Tools:PyCharm python3.9
 """
 import csv
 import pathlib
+from datetime import datetime
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QBrush, QColor
@@ -46,6 +47,7 @@ class ManageAct(MyMainWindow, Ui_manageAct):
     def initDT(self):
         self.start_dt.setDateTime(self.act[2])
         self.end_dt.setDateTime(self.act[3])
+        self.end_dt.setMinimumDateTime(datetime.now())
 
     def initSlot(self):
         self.return_bt.clicked.connect(lambda: self.manageReturn.emit(self.act))
@@ -53,6 +55,18 @@ class ManageAct(MyMainWindow, Ui_manageAct):
         self.add_bt.clicked.connect(self.change)
         self.output_btn.clicked.connect(self.generateCsv)
         self.delete_btn.clicked.connect(self.delete)
+        self.delete_user_btn.clicked.connect(self.deleteUser)
+
+    def deleteUser(self):
+        items = self.user_tb.selectedItems()
+        db = DBUtil()
+        for i in range(0, len(items), 3):
+            sno = items[i].text()
+            uid = db.getOne(f"select id from face.user where sno='{sno}'")[0]
+            print(f"uid:{uid}")
+            sql = f"delete from face.sign where user_id={int(uid)} and activity_id={self.actID}"
+            db.delete(sql)
+        self.initTable()
 
     def delete(self):
         db = DBUtil()
@@ -68,6 +82,9 @@ class ManageAct(MyMainWindow, Ui_manageAct):
             QMessageBox.information(self, "waining", "活动名称不得为空！", QMessageBox.Ok)
             self.name_le.clear()
             self.name_le.setFocus()
+            return
+        if st > ed:
+            QMessageBox.information(self, "waining", "开始时间不得晚于结束时间！", QMessageBox.Ok)
             return
         db = DBUtil()
         res = db.update(f"update face.activity set name='{name}', start_time='{getDateTime(st)}',"
@@ -205,8 +222,7 @@ class UTA(MyMainWindow, Ui_addUser):
         db = DBUtil()
         sql = f"""select u.id, u.sno, u.name
                     from face.user u
-                    inner join face.`group` g on u.id = g.user_id
-                    where g.admin_id = {self.adminID}
+                    where u.admin_id = {self.adminID}
                         and u.id not in (select s.user_id from face.sign s where s.activity_id = {self.actID})"""
         res = db.getAll(sql)
         return res

@@ -19,13 +19,14 @@ class AddUser(MyMainWindow, Ui_add_user):
     """"""
     addReturn = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, adminID, actID, parent=None):
         super(AddUser, self).__init__(parent)
         self.setupUi(self)
         self.initUi()
         self.initSlot()
+        self.adminID = adminID
+        self.actID = actID
         self.feature = None
-        self.adminID = None
 
     def initUi(self):
         self.resize(1200, 600)
@@ -60,12 +61,12 @@ class AddUser(MyMainWindow, Ui_add_user):
             return
         feature = self.feature2str()
         res = db.save(
-            f"insert into face.user(name, sno, sex, email, feature) values('{name}',"
-            f" '{sno}', {self.getSex()} , '{email}', '{feature}')")
+            f"insert into face.user(name, sno, sex, email, feature, admin_id) values('{name}',"
+            f" '{sno}', {self.getSex()} , '{email}', '{feature}', {self.adminID})")
         if res != 0:
             print(f"{name}已经录入")
             id = db.getOne(f"select id from face.user where sno = '{sno}'")[0]
-            db.save(f"insert into face.`group`(user_id, admin_id) values({id}, {self.adminID})")
+            db.save(f"insert into face.sign(user_id, activity_id) values({id}, {self.actID})")
             self.addReturn.emit()
 
     def warning(self, le, type_str, name):

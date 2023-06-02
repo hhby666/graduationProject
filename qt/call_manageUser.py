@@ -66,7 +66,6 @@ class ManageUser(MyMainWindow, Ui_manageUser):
         db = DBUtil()
         sql = f"""select u.id, u.sno, u.name
                     from face.user u
-                    inner join face.`group` g on u.id = g.user_id
-                    where g.admin_id = {self.adminID}"""
+                    where u.admin_id = {self.adminID}"""
         res = db.getAll(sql)
         return res

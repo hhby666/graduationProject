@@ -188,7 +188,7 @@ QLabel{
    <widget class="QPushButton" name="output_btn">
     <property name="geometry">
      <rect>
-      <x>480</x>
+      <x>450</x>
       <y>530</y>
       <width>151</width>
       <height>41</height>
@@ -207,7 +207,7 @@ QLabel{
    <widget class="QPushButton" name="addUser_btn">
     <property name="geometry">
      <rect>
-      <x>770</x>
+      <x>830</x>
       <y>530</y>
       <width>151</width>
       <height>41</height>
@@ -250,6 +250,25 @@ QLabel{
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="delete_user_btn">
+    <property name="geometry">
+     <rect>
+      <x>640</x>
+      <y>530</y>
+      <width>151</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>150</horstretch>
+      <verstretch>40</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="text">
+     <string>删除选中人员</string>
     </property>
    </widget>
   </widget>

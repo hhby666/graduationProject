@@ -6,7 +6,6 @@ FileName:EmailUtil.py in CV_study
 Tools:PyCharm python3.8.4
 """
 import smtplib
-import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header

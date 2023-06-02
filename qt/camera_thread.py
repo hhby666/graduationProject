@@ -36,5 +36,6 @@ class Camera(QThread):
                 num -= 1
             else:
                 self.faceSignal.emit(show)
+                print(time.time())
                 num = 20
             time.sleep(0.03)
