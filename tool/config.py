@@ -14,7 +14,7 @@ mysql_config = {
 }
 email_config = {
     "host": 'smtp.163.com',
-    "license": 'IDRTDSYBFIHDBPNZ',
+    "license": '自己的邮箱授权码',
     "port": 25
 }
 re_dic = {
