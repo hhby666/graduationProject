@@ -7,8 +7,11 @@
 ## 目录结构
 
 > ├─qt
+>
 > │  └─ui
+>
 > ├─resources
+>
 > └─tool
 
 qt下存放界面逻辑代码，ui中存放PyQt5界面代码
@@ -28,3 +31,5 @@ pip install -r requirements.txt
 打开mysql连接执行resources中的sql脚本完成建库，修改tool目录下的config配置为自己的邮箱和数据库。
 
 运行main.py即可运行。
+
+> [github仓库](https://github.com/hhby666/graduationProject)
